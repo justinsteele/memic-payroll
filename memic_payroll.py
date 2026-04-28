@@ -2,6 +2,7 @@
 """Generate MEMIC Comp-As-You-Go payroll submission files from Square payroll CSV exports."""
 
 import csv
+import hashlib
 import json
 import os
 from difflib import get_close_matches
@@ -157,7 +158,10 @@ def generate_xlsx(db: dict, payroll: dict, pay_date: str) -> Path:
     OUTPUT_DIR.mkdir(exist_ok=True)
     parts = pay_date.split("/")
     date_str = f"{parts[2]}-{parts[0]}-{parts[1]}" if len(parts) == 3 else pay_date.replace("/", "-")
-    out_path = OUTPUT_DIR / f"MEMIC_Payroll_{date_str}.xlsx"
+    fingerprint = hashlib.md5(
+        json.dumps(sorted(payroll.items()), sort_keys=True).encode()
+    ).hexdigest()[:8]
+    out_path = OUTPUT_DIR / f"MEMIC_Payroll_{date_str}_{fingerprint}.xlsx"
     wb.save(out_path)
     return out_path
 
